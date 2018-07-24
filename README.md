@@ -16,6 +16,9 @@ A Persistence Of Vision (POV) display that utilizes a Hall sensor &amp; the onbo
 
 ## Characters
 Below are the set of characters that are available for the POV Display:
+<br/><br/>
+![](f7x7.png)
+<br/>
 - Spaces ( )
 - Numbers (0-9)
 - Alphabets (Uppercase, A-Z)
