@@ -3,6 +3,15 @@
 
 A Persistence Of Vision (POV) display that utilizes a Hall sensor &amp; the onboard LEDs of the Maker Uno.
 
+## Components
+- Hall Sensor
+- Maker Uno
+- Jumper Wires
+
+## Requirements
+Ensure that the *MsTimer2* library is installed before running the sketch. <br/> 
+More details can be found here: https://playground.arduino.cc/Main/MsTimer2
+
 ## Usage
 - Change the string variable in the _printMsg_ accordingly to what you want the POV to display. 
 - There are a few preset constant string to test the fonts available: 
