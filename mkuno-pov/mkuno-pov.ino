@@ -1,7 +1,7 @@
 /*
   ===========================================================
   Maker Uno POV Display, Sync with Hall Sensor
-  Version 0.4.0
+  Version 0.4.3
   By: 1487Quantum (https://github.com/1487quantum)
   ===========================================================
   > Uses moving average, with a period of 8
@@ -13,6 +13,15 @@
   ===========================================================
   CHANGELOG
   ===========================================================
+  v0.4.3
+  - Removed moving average
+  - Fixed LED update duration to 0.0001ms
+  v0.4.2
+  - Shifted var to config.h
+  - 'f7x5.h' replaces 'f7x7.h' as font table header
+  - Updated parsing fx to dynamically add the "blank" columns
+    instead of hardcoding it int0 the font table.
+  - Removed update timer fx: Keeping refresh rate constant at 0.001
   v0.4.1
   - Added few more test constants
   - Updated to parse some symbols: : ! " # $ % ' + , - . /
@@ -59,47 +68,18 @@
   - Able to display the following characters: 0 - 4
 */
 
-#include "f7x7.h"
+#include "f7x5.h"
 #include "MsTimer2.h"
+#include "config.h"
 
-#define DEBUG 0         //Enable to show serial log
-#define INT_PIN 2       //Interrupt pin 2 for Hall sensor
-#define MA_PERIOD 8    //Moving Average period
-
-//Display Settings
-#define CH_WIDTH 7      //Num of columns in a single character
-#define MAXCHAR 35      //Max num of char display
-#define LEDOFFSET 3     //How many LED to offset from D0
-//Test strings
-#define T_NM "0123456789 "                  //Numbers
-#define T_AP "ABCDEFGHIJKLMNOPQRSTUVWXYZ"   //Alphabet (Upper)
-#define T_SM "!\"#$%'+,-./"                 //Symbols
-#define T_HW "Hello world!"                  //Hello world
-
-//Hall sensor var
-volatile byte state = LOW;
-
-//MA var
-int readings[MA_PERIOD];      // the readings from the analog input
-int readIndex = 0;            // the index of the current reading
-int total = 0;                // the running total
-
-//Timing var
-uint16_t lastUpdate;       //Time since last trigger
-float pd = 2;                //LED on update duration, ms
-int avgP = 0;              // the average update period
-
-//Display/font var
-uint16_t ch = 0;  //char index
-uint16_t i = 0;  //index i, step through width
-uint8_t done = 0; //Is true when msg is done
-
-//Format pattern
-// If upper true, upper value would be returned
+//Ouput display colmn
+//If upper set true, (upper bit) value would be returned
 uint8_t fmt_pattern(bool upper, uint16_t p) {
   uint8_t q;
   if (upper) {
-    q = (p << LEDOFFSET) >> 8; //Shift by LEDOFFSET to left as LED starts from D2, not D0. After that, Shift right by 8 to remove lower bits.
+    //Shift by LEDOFFSET to left as LED starts from D2, not D0.
+    //After that, Shift right by 8 to remove lower bits.
+    q = (p << LEDOFFSET) >> 8;
   } else {
     //Lower half
     q = (p << LEDOFFSET) & 0xff; //Shift by LEDOFFSET to left as LED starts from D2, not D0
@@ -109,14 +89,42 @@ uint8_t fmt_pattern(bool upper, uint16_t p) {
 
 //Display string on POV
 void dispMsg() {
-  printMsg(T_AP);
+  //printMsg(T_AP);
+  char charBuf[MAXCHAR];
+  String buf = "RPM - ";
+  buf += pd ;
+  buf.toCharArray(charBuf, MAXCHAR);
+  printMsg(charBuf);
 }
 
+
+//Push the columns
+//Font table, font element, column index
+void pushCol(uint16_t *fnt[], uint16_t ch, uint16_t i) {
+  if (DEBUG) {
+    Serial.print(ch);
+    Serial.print(F(","));
+    Serial.print(i);
+    Serial.print(F(","));
+    Serial.println(pgm_read_word(fnt[ch] + i), HEX);
+  }
+  if (ch == -1) {
+    //Turn off all LEDs
+    PORTD = fmt_pattern(false, 0);
+    PORTB = fmt_pattern(true, 0);
+  } else {
+    PORTD = fmt_pattern(false, pgm_read_word(fnt[ch] + i));
+    PORTB = fmt_pattern(true, pgm_read_word(fnt[ch] + i));
+  }
+}
+
+
+//Parse str -> char
 void printMsg(char cmsg[]) {
   int char_k = 0;
-  if (ch == strlen(cmsg) || ch >= MAXCHAR) {
+  if (ch == strlen(cmsg) || ch >= MAXCHAR ) {
     //If msg end reach or char limit reach -> Blank the rest
-    ch = 0;
+    ch = -1;
     i = 0;
     done = 1;
   } else {
@@ -124,7 +132,11 @@ void printMsg(char cmsg[]) {
   }
   if (DEBUG) {
     Serial.print("Char: ");
-    Serial.println(cmsg[ch]);
+    Serial.print(ch == -1 ? '~' : cmsg[ch] );
+    Serial.print(",Blank: ");
+    Serial.print(blank);
+    Serial.print(",Done: ");
+    Serial.println(done);
   }
   if (!done) {
     // make sure the character is within the alphabet bounds (defined by the font.h file)
@@ -138,8 +150,8 @@ void printMsg(char cmsg[]) {
       char_k -= 32;
     }
     // Converts ASCII num to the font index number
-    if (char_k == 32) {
-      pushCol(f_sym, 5, i); //Display nothing
+    if (char_k == 32 || blank) {
+      pushCol(f_sym, -1, i); //Display nothing
     } else {
       //Check for symbols
       if (char_k > 32 && char_k <= 47) {
@@ -154,38 +166,31 @@ void printMsg(char cmsg[]) {
           //Alphabet A-Z, subtract 17 for alphabet font table
           pushCol(f_alp - 17, char_k, i);
         } else {
-          pushCol(f_sym, 5, i); //Display nothing
+          //Display nothing
+          pushCol(f_sym, ch, i);
         }
       }
     }
 
-    if (i >= CH_WIDTH - 1) { //Reset
+    if (i >= CH_WIDTH + CH_SPACE) {
+      //All columns displayed, move to next char
       i = 0;
+      blank = 0;
       ch++;
     } else {
+      if (i >= CH_WIDTH - 1) {
+        //Space between the char
+        blank = 1;
+      }
+      //Mov to nxt column of char
       i++;
     }
+  } else {
+    //Display nothing
+    pushCol(f_sym, ch, i);
   }
 }
 
-//Push the columns
-//Font table, font element, column index
-void pushCol(uint16_t *fnt[], uint16_t ch, uint16_t i) {
-  if (DEBUG) {
-    Serial.print(ch);
-    Serial.print(F(","));
-    Serial.print(i);
-    Serial.print(F(","));
-    Serial.println(pgm_read_word(fnt[ch] + i), HEX);
-  }
-  if (ch == -1) {
-    PORTD = fmt_pattern(false, 0); //D2-D7, shift by 2 as LED starts on D2,not D0
-    PORTB = fmt_pattern(true, 0); //D8-D13
-  } else {
-    PORTD = fmt_pattern(false, pgm_read_word(fnt[ch] + i)); //D2-D7, shift by 2 as LED starts on D2,not D0
-    PORTB = fmt_pattern(true, pgm_read_word(fnt[ch] + i)); //D8-D13
-  }
-}
 
 void setup() {
   if (DEBUG) {
@@ -197,50 +202,37 @@ void setup() {
   //Attach interrupt for hall sensor
   attachInterrupt(digitalPinToInterrupt(INT_PIN), updatePd, CHANGE);
 
-  // initialize all MA readings to 0:
-  for (int thisReading = 0; thisReading < MA_PERIOD; thisReading++) {
-    readings[thisReading] = 0;
-  }
-
-  MsTimer2::set(2, dispMsg);    //Start timer with default val
+  //Start display update timer
+  MsTimer2::set(UPDATE_LED, dispMsg);
   MsTimer2::start();
 }
 
 void updatePd() {
-  uint16_t tmp;
   state = !state;
+  //Rising edge would be time marker/trigger
   if (state) {
-    tmp = micros();
-    //Rising edge would be time marker/trigger
+    unsigned long tmp_t = millis();             //Tmp var
+
     //long r_duration = tmp - lastUpdate; //raw duration
-    float s = int((tmp - lastUpdate) % 1000);   //milliseconds
-    pd = 1 / pd;   // Rotation, ms/degree
+
+    //Duration of 1 rotation/revolution (in ms)
+    //float s = int((tmp_t - lastUpdate) % 1000);
+    pd = tmp_t - lastUpdate;
+    pd %= 1000;
+    lastUpdate = tmp_t;
+
+    // Rotation in 1ms (ms/rev)
+    //pd = 1/pd;
     if (DEBUG) {
-      Serial.println(pd); //get degree in 1s instead
+      Serial.print("Pd:");
+      Serial.println(pd);
     }
 
-    //Moving Average (MA), to filter noise
-    total -= readings[readIndex];    // subtract the last reading
-    readings[readIndex] = pd;        // get the latest readings
-    total += readings[readIndex];    // add the reading to the total
-    readIndex++;                     // advance to the next position in the array:
-
-    // if we're at the end of the array...
-    if (readIndex >= MA_PERIOD) {
-      // ...wrap around to the beginning:
-      readIndex = 0;
-    }
-    avgP = total / MA_PERIOD;         // calculate the average
-
-    //Restart timer with new timing
-    MsTimer2::stop();
-    MsTimer2::set(avgP, dispMsg); //update the display duration when "homed" with magnet
-    MsTimer2::start();
+    //Refresh display
+    dispMsg();
     ch = 0; i = 0; done = 0;
-    lastUpdate = tmp;
   }
 }
 
 void loop() {
-
 }
