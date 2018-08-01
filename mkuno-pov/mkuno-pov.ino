@@ -91,7 +91,7 @@ uint8_t fmt_pattern(bool upper, uint16_t p) {
 void dispMsg() {
   //printMsg(T_AP);
   char charBuf[MAXCHAR];
-  String buf = "RPM - ";
+  String buf = "MS PER REV - ";   //How long (in milliseconds) it takes to complete 1 rev
   buf += pd ;
   buf.toCharArray(charBuf, MAXCHAR);
   printMsg(charBuf);
