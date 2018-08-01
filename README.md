@@ -7,9 +7,11 @@ A Persistence Of Vision (POV) display that utilizes a Hall sensor &amp; the onbo
 - Hall Sensor
 - Maker Uno
 - Jumper Wires
+- A beam (to mount the Maker Uno & Hall Sensor)
+- Support stand with a mahnet & motor to rotate the beam.
 
 ## Requirements
-Ensure that the *MsTimer2* library is installed before running the sketch. <br/> 
+As the *MsTimer2* library will be utillized, ensure that it is installed before running the sketch. <br/> 
 More details can be found here: https://playground.arduino.cc/Main/MsTimer2
 
 ## Usage
@@ -21,7 +23,6 @@ More details can be found here: https://playground.arduino.cc/Main/MsTimer2
   - *T_HW*: The classic *Hello World* to get things started!
 - The character limit that can be _displayed_ is set via the _MAXCHAR_ constant, which is set to 35 by default.
 - For debugging, enable the *DEBUG* constant.
-
 
 ## Characters
 Below are the set of characters that are available for the POV Display:
