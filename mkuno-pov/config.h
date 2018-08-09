@@ -1,6 +1,7 @@
 #define DEBUG 0         //Enable to show serial log
 
 #define INT_PIN 2       //Interrupt pin 2 for Hall sensor
+#define S_PIN 8         //Buzzer pin hardwired to pin 8
 
 //Display Settings
 #define UPDATE_LED 0.0001  //Duration of LED "ON" per column
@@ -15,6 +16,11 @@
 #define T_SM "!\"#$%'+,-./"                 //Symbols
 #define T_HW "Hello world!"                 //Hello world
 
+//tone track
+uint16_t jc = 0; //Tempo counter
+uint16_t tk = 0; //Tone counter
+uint8_t snd = 0;  //Boolean to turn on sound
+
 //Hall sensor var
 volatile byte state = LOW;
 
@@ -27,3 +33,7 @@ uint16_t ch = 0;  //char index
 uint16_t i = 0;  //index i, step through width
 uint8_t done = 0; //Is true when all char is displayed
 uint8_t blank = 0; //Blank column would be shown if true
+
+
+//Next msg counter
+uint16_t nmsg = 0;
