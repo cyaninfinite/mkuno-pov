@@ -1,7 +1,7 @@
 /*
   ===========================================================
   Maker Uno POV Display, Sync with Hall Sensor
-  Version 0.4.3
+  Version 0.4.4
   By: 1487Quantum (https://github.com/1487quantum)
   ===========================================================
   > Uses moving average, with a period of 8
@@ -13,6 +13,8 @@
   ===========================================================
   CHANGELOG
   ===========================================================
+  v0.4.4
+  - Display 2 different lines of text
   v0.4.3
   - Removed moving average
   - Fixed LED update duration to 0.0001ms
@@ -72,6 +74,7 @@
 #include "MsTimer2.h"
 #include "config.h"
 
+
 //Ouput display colmn
 //If upper set true, (upper bit) value would be returned
 uint8_t fmt_pattern(bool upper, uint16_t p) {
@@ -80,6 +83,7 @@ uint8_t fmt_pattern(bool upper, uint16_t p) {
     //Shift by LEDOFFSET to left as LED starts from D2, not D0.
     //After that, Shift right by 8 to remove lower bits.
     q = (p << LEDOFFSET) >> 8;
+
   } else {
     //Lower half
     q = (p << LEDOFFSET) & 0xff; //Shift by LEDOFFSET to left as LED starts from D2, not D0
@@ -87,14 +91,34 @@ uint8_t fmt_pattern(bool upper, uint16_t p) {
   return q;
 }
 
+//#define sbi(port,bit) (port)|=(1<<(bit))  //To set pin state faster (only 2 cycles!)
+//http://web.archive.org/web/20170819105819/http://www.atmel.com/webdoc/AVRLibcReferenceManual/FAQ_1faq_port_pass.html
+void setTone(volatile uint8_t *port, uint8_t pin, uint8_t state) {
+  //If port is PORTB, remove 8 as LSB starts at D8
+  *port |= (state << pin - (*port == PORTB ? 8 : 0));
+}
+
 //Display string on POV
 void dispMsg() {
-  //printMsg(T_AP);
-  char charBuf[MAXCHAR];
-  String buf = "MS PER REV - ";   //How long (in milliseconds) it takes to complete 1 rev
-  buf += pd ;
-  buf.toCharArray(charBuf, MAXCHAR);
-  printMsg(charBuf);
+
+  if (nmsg > 4000) {
+    printMsg("     Hello world!  ");
+  } else {
+    printMsg(" This is a POV display ");
+  }
+  if (nmsg >= 8000) {
+    nmsg = 0;
+  }
+
+
+  nmsg++;
+  /*
+    char charBuf[MAXCHAR];
+    String buf = "RPM - ";
+    buf += pd ;
+    buf.toCharArray(charBuf, MAXCHAR);
+    printMsg(charBuf);
+  */
 }
 
 
@@ -116,8 +140,8 @@ void pushCol(uint16_t *fnt[], uint16_t ch, uint16_t i) {
     PORTD = fmt_pattern(false, pgm_read_word(fnt[ch] + i));
     PORTB = fmt_pattern(true, pgm_read_word(fnt[ch] + i));
   }
-}
 
+}
 
 //Parse str -> char
 void printMsg(char cmsg[]) {
@@ -140,7 +164,7 @@ void printMsg(char cmsg[]) {
   }
   if (!done) {
     // make sure the character is within the alphabet bounds (defined by the font.h file)
-    // if it's not, make it a blank character ('z'->122)
+    // if it's not, nothing will be displayed ('z'->122)
     if (char_k < 32 || char_k > 122) {
       char_k = 32;
     }
@@ -177,6 +201,7 @@ void printMsg(char cmsg[]) {
       i = 0;
       blank = 0;
       ch++;
+
     } else {
       if (i >= CH_WIDTH - 1) {
         //Space between the char
@@ -189,6 +214,7 @@ void printMsg(char cmsg[]) {
     //Display nothing
     pushCol(f_sym, ch, i);
   }
+
 }
 
 
@@ -197,7 +223,7 @@ void setup() {
     Serial.begin(115200);
   }
   // Leave pin 0 (serial receive) as input, otherwise serial port will stop working!) ...
-  DDRD = 0b11111010; // set digital  1,3- 7 to output, 2 as input (interrupt)
+  DDRD |= 0b11111010; // set digital  1,3- 7 to output, 2 as input (interrupt) [Safer way via or]
   DDRB = 0b00111111; // set digital  8-13 to output
   //Attach interrupt for hall sensor
   attachInterrupt(digitalPinToInterrupt(INT_PIN), updatePd, CHANGE);
@@ -235,4 +261,5 @@ void updatePd() {
 }
 
 void loop() {
+
 }
