@@ -1,4 +1,9 @@
 # mkuno-pov
+<a href="LICENSE" ><img src="https://img.shields.io/github/license/cyaninfinite/mkuno-pov?style=flat-square"/></a>
+<a href="https://github.com/cyaninfinite/mkuno-pov/workflows/ard-ci.yml" ><img src="https://img.shields.io/github/workflow/status/cyaninfinite/mkuno-pov/Arduino-CI?label=Build&logo=arduino&style=flat-square"/></a>
+
+<a href="https://cyaninfinite.com/pov-display-with-maker-uno/" ><img src="https://img.shields.io/badge/Documentation-@Cyaninfinite-blue?style=for-the-badge"/></a>
+
 A Persistence Of Vision (POV) display that utilizes a Hall sensor &amp; the onboard LEDs of the Maker Uno.
 
 ## Components
@@ -25,8 +30,9 @@ More details can be found here: https://playground.arduino.cc/Main/MsTimer2
 ## Characters
 Below are the set of characters that are available for the POV Display:
 <br/><br/>
-![](f7x7.png)
+![](./docs/assets/f7x7.png)
 <br/>
+
 - Spaces ( )
 - Numbers (0-9)
 - Alphabets (Uppercase, A-Z)
@@ -34,7 +40,8 @@ Below are the set of characters that are available for the POV Display:
 
 If there are characters that are not recognised in the string passed to the *printMsg* function, it would be replaced with a empty character (or put simply, nothing).
 
-
+# License
+Licensed under the [MIT License](./LICENSE).
 
 
 
