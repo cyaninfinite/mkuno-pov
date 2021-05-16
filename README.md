@@ -11,7 +11,7 @@ A Persistence Of Vision (POV) display that utilizes a Hall sensor &amp; the onbo
 - Maker Uno
 - Jumper Wires
 - A beam (to mount the Maker Uno & Hall Sensor)
-- Support stand with a mahnet & motor to rotate the beam.
+- Support stand with a magnet & motor to rotate the beam.
 
 ## Requirements
 As the *MsTimer2* library will be utillized, ensure that it is installed before running the sketch. <br/> 
