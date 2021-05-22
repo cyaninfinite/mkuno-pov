@@ -1,5 +1,5 @@
 # mkuno-pov
-<a href="LICENSE" ><img src="https://img.shields.io/github/license/cyaninfinite/mkuno-pov?style=flat-square"/></a>
+<a href="LICENSE" ><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square"/></a>
 <a href="https://github.com/cyaninfinite/mkuno-pov/workflows/ard-ci.yml" ><img src="https://img.shields.io/github/workflow/status/cyaninfinite/mkuno-pov/Arduino-CI?label=Build&logo=arduino&style=flat-square"/></a>
 
 <a href="https://cyaninfinite.com/pov-display-with-maker-uno/" ><img src="https://img.shields.io/badge/Documentation-@Cyaninfinite-blue?style=for-the-badge"/></a>
